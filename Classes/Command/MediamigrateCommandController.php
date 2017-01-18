@@ -63,11 +63,40 @@ class MediamigrateCommandController extends \TYPO3\CMS\Extbase\Mvc\Controller\Co
 
     public function __construct()
     {
+        // Adding options to help archive:
+        $this->cli_options[] = array('--pid', 'Seite mit den zu migrierenden Datensätzen');
+        $this->cli_options[] = array('--folder', 'absoluter Pfad zum Ordner, in dem die FAL Medien abgelegt werden sollen');
         $this->logger = GeneralUtility::makeInstance('TYPO3\CMS\Core\Log\LogManager')->getLogger(__CLASS__);
         $this->resourceFactory = \TYPO3\CMS\Core\Resource\ResourceFactory::getInstance();
     }
 
-    public function MediamigrateCommand() {
-        var_dump('Hier!');
+    /**
+     * @param int $pid Seiten UID mit News Records
+     */
+    public function MediamigrateCommand($pid, $folder) {
+        if ($pid > 0) {
+            $querySettings = $this->objectManager->get('TYPO3\\CMS\\Extbase\\Persistence\\Generic\\Typo3QuerySettings');
+            /* @var $querySettings \TYPO3\CMS\Extbase\Persistence\Generic\Typo3QuerySettings */
+            $querySettings->getRespectStoragePage(false);
+            $querySettings->setStoragePageIds(array($pid));
+            /* @var $newsToMigrate \TYPO3\CMS\Extbase\Persistence\QueryResultInterface */
+            $this->newsRepository->setDefaultQuerySettings($querySettings);
+            $newsToMigrate = $this->newsRepository->findAll();
+            if ($newsToMigrate->count() > 0) {
+                foreach ($newsToMigrate as $news) {
+                    /* @var $news \GeorgRinger\News\Domain\Model\News */
+                    if ($news->getMedia()) {
+                        foreach ($news->getMedia() as $media) {
+                            /* @var $media \GeorgRinger\News\Domain\Model\Media */
+                            var_dump($media->getUid());
+                            var_dump($media->getCaption());
+                            var_dump($media->getTitle());
+                            var_dump($media->getImage());
+                            var_dump($media->getShowinpreview());
+                        }
+                    }
+                }
+            }
+        }
     }
 }
