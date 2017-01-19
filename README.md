@@ -1,7 +1,7 @@
-Migrate News Media and RelatedFiles to FAL
+Migrate ext_news media and related files to FAL
 ====
 
-Intended Audience
+Intended audience
 ----
 Experienced TYPO3 Integrators and Developers
 
