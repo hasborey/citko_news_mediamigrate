@@ -56,16 +56,13 @@ class MediamigrateCommandController extends \TYPO3\CMS\Extbase\Mvc\Controller\Co
 
     public function __construct()
     {
-        // Adding options to help archive:
-        $this->cli_options[] = array('-pid', 'Seite mit den zu migrierenden Datensätzen');
-        $this->cli_options[] = array('-folder', 'Pfad zum Ordner (ohne abschließendes Slash), in dem die FAL Medien abgelegt werden sollen ab PATH_site');
         $this->logger = GeneralUtility::makeInstance('TYPO3\CMS\Core\Log\LogManager')->getLogger(__CLASS__);
         $this->resourceFactory = \TYPO3\CMS\Core\Resource\ResourceFactory::getInstance();
     }
 
     /**
-     * @param int $pid Seiten UID mit News Records
-     * @param string $folder absoluter Pfad für FAL-Dateien ab PATH_site
+     * @param int $pid PID with news records
+     * @param string $folder folder for FAL files from PATH_site e.g. fileadmin/news
      */
     public function MediamigrateCommand($pid, $folder) {
         if ($pid > 0 && is_dir(PATH_site . $folder)) {
@@ -85,14 +82,14 @@ class MediamigrateCommandController extends \TYPO3\CMS\Extbase\Mvc\Controller\Co
             if ($newsToMigrate->count() > 0) {
                 foreach ($newsToMigrate as $news) {
                     $clear =  new \TYPO3\CMS\Extbase\Persistence\ObjectStorage();
-                    // Media -> FAL Media
 
+                    // Media -> FAL Media
                     /* @var $news \GeorgRinger\News\Domain\Model\News */
                     if ($news->getMedia()) {
                         $news->setFalMedia($clear);
                         foreach ($news->getMedia() as $media) {
                             /* @var $media \GeorgRinger\News\Domain\Model\Media */
-                            // Ist es ein Bild?
+                            // Is it an image
                             if(strlen($media->getImage()) > 0) {
                                 try {
                                     $newfilename = $FU->getUniqueName($media->getImage(), PATH_site . $folder);
@@ -115,7 +112,7 @@ class MediamigrateCommandController extends \TYPO3\CMS\Extbase\Mvc\Controller\Co
                                     $news->addFalMedia($reference);
                                 }
                                 else {
-                                    $this->logger->error('Kann Datei ' . $media->getImage() . ' von News ' . $news->getUid() . ' nicht migrieren');
+                                    $this->logger->error('Unable to migrate media' . $media->getImage() . ' of news ' . $news->getUid() );
                                 }
                             }
                             elseif (strlen($media->getMultimedia()) > 0 && strpos($media->getMultimedia(), 'file:') !== false) {
@@ -133,7 +130,7 @@ class MediamigrateCommandController extends \TYPO3\CMS\Extbase\Mvc\Controller\Co
 
                     $this->newsRepository->update($news);
                     $this->persistenceManager->persistAll();
-                    $this->logger->info('Media von News ' . $news->getUid() . ' migriert');
+                    $this->logger->info('Migrated media of news' . $news->getUid() );
 
                     unset($file);
                     unset($newfilename);
@@ -168,14 +165,14 @@ class MediamigrateCommandController extends \TYPO3\CMS\Extbase\Mvc\Controller\Co
                                     $news->addFalRelatedFile($reference);
                                 }
                                 else {
-                                    $this->logger->error('Kann Datei ' . $relatedFile->getFile() . ' von News ' . $news->getUid() . ' nicht migrieren');
+                                    $this->logger->error('Unable to migrate relatedFile' . $relatedFile->getFile() . ' of news ' . $news->getUid() );
                                 }
                             }
                         }
 
                         $this->newsRepository->update($news);
                         $this->persistenceManager->persistAll();
-                        $this->logger->info('RelatedFiles von News ' . $news->getUid() . ' migriert');
+                        $this->logger->info('Migrated relatedFiles of news ' . $news->getUid() );
 
                     }
 
@@ -185,9 +182,9 @@ class MediamigrateCommandController extends \TYPO3\CMS\Extbase\Mvc\Controller\Co
     }
 
     /**
-     * Alte Medien wirklich löschen - erst nach Migration ausführen
-     * @param int $pid PID mit Datensätzen
-     * @param int $really Wirklisch löschen
+     * Delete old relations and files
+     * @param int $pid PID with news records
+     * @param int $really do it?
      */
     public function MediadeleteCommand ($pid, $really) {
         if ($pid > 0 && intval($really) === 1) {
@@ -210,7 +207,9 @@ class MediamigrateCommandController extends \TYPO3\CMS\Extbase\Mvc\Controller\Co
                             /* @var $media \GeorgRinger\News\Domain\Model\Media */
                             // Ist es ein Bild?
                             if (strlen($media->getImage()) > 0) {
+                                $this->logger->info('Deleting' . $media->getImage() . 'assigned to ' . $news->getUid());
                                 unlink(PATH_site . 'uploads/tx_news/' . $media->getImage());
+
                             }
                         }
                         $news->setMedia($clear);
@@ -232,6 +231,7 @@ class MediamigrateCommandController extends \TYPO3\CMS\Extbase\Mvc\Controller\Co
                         foreach ($news->getRelatedFiles() as $file) {
                             /* @var $file \GeorgRinger\News\Domain\Model\File */
                             if (strlen($file->getFile()) > 0) {
+                                $this->logger->info('Deleting' . $file->getFile() . 'assigned to ' . $news->getUid());
                                 unlink(PATH_site.'uploads/tx_news/'.$file->getFile());
                             }
                         }

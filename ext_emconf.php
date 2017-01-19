@@ -2,7 +2,7 @@
 
 $EM_CONF[$_EXTKEY] = array(
    'title' => 'News Media Migrate',
-   'description' => 'Migriert alte Media Records zu FAL',
+   'description' => 'Migrates old style News media/related files to FAL',
    'category' => 'plugin',
    'author' => 'Sascha Schieferdecker',
    'author_email' => 'schieferdecker@citkomm.de',
