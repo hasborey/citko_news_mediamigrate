@@ -20,12 +20,14 @@ Run the migration from CLI:
 
 This command copies the files from uploads/tx_news to the folder and creates FAL references for the media and related file elements of a news record.
 
-After checking the migration ran okay you can delete the migrated files and the old references:
+After checking the migration you can delete the migrated files and the old references:
 
 `typo3/cli_dispatch.phpsh extbase mediamigrate:mediadelete --pid PID_WITH_NEWS_RECORDS`
 
 Then you will have to enter `1`, if you want to proceed.
 
 That's it. The extension fits our purpose, feel free to modify it!
+
+Big thanks to my company [Citkomm](http://www.citkomm.de) for letting me publish this.
 
 
