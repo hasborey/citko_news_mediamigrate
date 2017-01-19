@@ -6,7 +6,8 @@ use GeorgRinger\News\Domain\Model\FileReference;
 use TYPO3\CMS\Core\Utility\File\BasicFileUtility;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
-class MediamigrateCommandController extends \TYPO3\CMS\Extbase\Mvc\Controller\CommandController {
+class MediamigrateCommandController extends \TYPO3\CMS\Extbase\Mvc\Controller\CommandController
+{
 
     /**
      * @var \TYPO3\CMS\Extbase\Configuration\BackendConfigurationManager
@@ -64,7 +65,8 @@ class MediamigrateCommandController extends \TYPO3\CMS\Extbase\Mvc\Controller\Co
      * @param int $pid PID with news records
      * @param string $folder folder for FAL files from PATH_site e.g. fileadmin/news
      */
-    public function MediamigrateCommand($pid, $folder) {
+    public function MediamigrateCommand($pid, $folder)
+    {
         if ($pid > 0 && is_dir(PATH_site . $folder)) {
 
             $FU = new BasicFileUtility;
@@ -81,7 +83,7 @@ class MediamigrateCommandController extends \TYPO3\CMS\Extbase\Mvc\Controller\Co
 
             if ($newsToMigrate->count() > 0) {
                 foreach ($newsToMigrate as $news) {
-                    $clear =  new \TYPO3\CMS\Extbase\Persistence\ObjectStorage();
+                    $clear = new \TYPO3\CMS\Extbase\Persistence\ObjectStorage();
 
                     // Media -> FAL Media
                     /* @var $news \GeorgRinger\News\Domain\Model\News */
@@ -90,7 +92,7 @@ class MediamigrateCommandController extends \TYPO3\CMS\Extbase\Mvc\Controller\Co
                         foreach ($news->getMedia() as $media) {
                             /* @var $media \GeorgRinger\News\Domain\Model\Media */
                             // Is it an image
-                            if(strlen($media->getImage()) > 0) {
+                            if (strlen($media->getImage()) > 0) {
                                 try {
                                     $newfilename = $FU->getUniqueName($media->getImage(), PATH_site . $folder);
                                     copy(PATH_site . 'uploads/tx_news/' . $media->getImage(), $newfilename);
@@ -110,12 +112,12 @@ class MediamigrateCommandController extends \TYPO3\CMS\Extbase\Mvc\Controller\Co
                                     $reference->setShowinpreview($media->getShowinpreview());
                                     $reference->setPid($pid);
                                     $news->addFalMedia($reference);
+                                } else {
+                                    $this->logger->error('Unable to migrate media' . $media->getImage() . ' of news ' . $news->getUid());
                                 }
-                                else {
-                                    $this->logger->error('Unable to migrate media' . $media->getImage() . ' of news ' . $news->getUid() );
-                                }
-                            }
-                            elseif (strlen($media->getMultimedia()) > 0 && strpos($media->getMultimedia(), 'file:') !== false) {
+                            } elseif (strlen($media->getMultimedia()) > 0 && strpos($media->getMultimedia(),
+                                    'file:') !== false
+                            ) {
                                 $reference = new FileReference();
                                 $reference->setFileUid(str_replace('file:', '', $media->getMultimedia()));
                                 $reference->setDescription($media->getCaption());
@@ -130,7 +132,7 @@ class MediamigrateCommandController extends \TYPO3\CMS\Extbase\Mvc\Controller\Co
 
                     $this->newsRepository->update($news);
                     $this->persistenceManager->persistAll();
-                    $this->logger->info('Migrated media of news' . $news->getUid() );
+                    $this->logger->info('Migrated media of news' . $news->getUid());
 
                     unset($file);
                     unset($newfilename);
@@ -140,9 +142,9 @@ class MediamigrateCommandController extends \TYPO3\CMS\Extbase\Mvc\Controller\Co
                     $newsToMigrate = $this->newsRepository->findAll();
 
                     foreach ($newsToMigrate as $news) {
-                        $clear =  new \TYPO3\CMS\Extbase\Persistence\ObjectStorage();
+                        $clear = new \TYPO3\CMS\Extbase\Persistence\ObjectStorage();
                         // Related Files -> FAL Related Files
-                        if($news->getRelatedFiles()) {
+                        if ($news->getRelatedFiles()) {
                             $news->setFalRelatedFiles($clear);
                             /* @var $relatedFile \GeorgRinger\News\Domain\Model\File */
                             foreach ($news->getRelatedFiles() as $relatedFile) {
@@ -163,16 +165,15 @@ class MediamigrateCommandController extends \TYPO3\CMS\Extbase\Mvc\Controller\Co
                                     $reference->setTitle($relatedFile->getTitle());
                                     $reference->setPid($pid);
                                     $news->addFalRelatedFile($reference);
-                                }
-                                else {
-                                    $this->logger->error('Unable to migrate relatedFile' . $relatedFile->getFile() . ' of news ' . $news->getUid() );
+                                } else {
+                                    $this->logger->error('Unable to migrate relatedFile' . $relatedFile->getFile() . ' of news ' . $news->getUid());
                                 }
                             }
                         }
 
                         $this->newsRepository->update($news);
                         $this->persistenceManager->persistAll();
-                        $this->logger->info('Migrated relatedFiles of news ' . $news->getUid() );
+                        $this->logger->info('Migrated relatedFiles of news ' . $news->getUid());
 
                     }
 
@@ -186,7 +187,8 @@ class MediamigrateCommandController extends \TYPO3\CMS\Extbase\Mvc\Controller\Co
      * @param int $pid PID with news records
      * @param int $really do it?
      */
-    public function MediadeleteCommand ($pid, $really) {
+    public function MediadeleteCommand($pid, $really)
+    {
         if ($pid > 0 && intval($really) === 1) {
             $querySettings = $this->objectManager->get('TYPO3\\CMS\\Extbase\\Persistence\\Generic\\Typo3QuerySettings');
 
@@ -227,12 +229,12 @@ class MediamigrateCommandController extends \TYPO3\CMS\Extbase\Mvc\Controller\Co
                 /* @var $news \GeorgRinger\News\Domain\Model\News */
                 foreach ($newsToDelete as $news) {
                     if ($news->getRelatedFiles()) {
-                        $clear =  new \TYPO3\CMS\Extbase\Persistence\ObjectStorage();
+                        $clear = new \TYPO3\CMS\Extbase\Persistence\ObjectStorage();
                         foreach ($news->getRelatedFiles() as $file) {
                             /* @var $file \GeorgRinger\News\Domain\Model\File */
                             if (strlen($file->getFile()) > 0) {
                                 $this->logger->info('Deleting' . $file->getFile() . 'assigned to ' . $news->getUid());
-                                unlink(PATH_site.'uploads/tx_news/'.$file->getFile());
+                                unlink(PATH_site . 'uploads/tx_news/' . $file->getFile());
                             }
                         }
                         $news->setRelatedFiles($clear);
