@@ -7,7 +7,7 @@ Experienced TYPO3 Integrators and Developers
 
 Status
 ----
-Tested on a small scale, feel free to adapt to your needs.
+Tested on 6.2 with news 3.2.x (2900 news records and 8 GB of files) and on 7.6 with news 4.3.x, feel free to adapt to your needs.
 
 Usage
 ---
