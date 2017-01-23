@@ -28,7 +28,7 @@ Then you will have to enter `1`, if you want to proceed.
 
 That's it. The extension fits our purpose, feel free to modify it!
 
-After migration delete the extension from your system.
+After migration delete the extension from your system and update your reference index.
 
 Big thanks to my company [Citkomm](http://www.citkomm.de) for letting me publish this.
 

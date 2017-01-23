@@ -80,10 +80,10 @@ class MediamigrateCommandController extends \TYPO3\CMS\Extbase\Mvc\Controller\Co
 
             /* @var $newsToMigrate \TYPO3\CMS\Extbase\Persistence\QueryResultInterface */
             $this->newsRepository->setDefaultQuerySettings($querySettings);
-            $newsToMigrate = $this->newsRepository->findAll();
+            $newsToMigrateMedia = $this->newsRepository->findAll();
 
-            if ($newsToMigrate->count() > 0) {
-                foreach ($newsToMigrate as $news) {
+            if ($newsToMigrateMedia->count() > 0) {
+                foreach ($newsToMigrateMedia as $news) {
                     $clear = new \TYPO3\CMS\Extbase\Persistence\ObjectStorage();
 
                     // Media -> FAL Media
@@ -144,46 +144,48 @@ class MediamigrateCommandController extends \TYPO3\CMS\Extbase\Mvc\Controller\Co
 
             /* @var $newsToMigrate \TYPO3\CMS\Extbase\Persistence\QueryResultInterface */
             $this->newsRepository->setDefaultQuerySettings($querySettings);
-            $newsToMigrate = $this->newsRepository->findAll();
-
-            foreach ($newsToMigrate as $news) {
-                $clear = new \TYPO3\CMS\Extbase\Persistence\ObjectStorage();
-                // Related Files -> FAL Related Files
-                if ($news->getRelatedFiles()) {
-                    $news->setFalRelatedFiles($clear);
-                    /* @var $relatedFile \GeorgRinger\News\Domain\Model\File */
-                    foreach ($news->getRelatedFiles()->toArray() as $relatedFile) {
-                        if (is_file(PATH_site . 'uploads/tx_news/' . $relatedFile->getFile())) {
-                            try {
-                                $newfilename = $FU->getUniqueName($relatedFile->getFile(), PATH_site . $folder);
-                                copy(PATH_site . 'uploads/tx_news/' . $relatedFile->getFile(), $newfilename);
-                                /* @var $file \TYPO3\CMS\Core\Resource\File */
-                                $file = $this->resourceFactory->retrieveFileOrFolderObject($newfilename);
-                            } catch (\TYPO3\CMS\Core\Resource\Exception\ResourceDoesNotExistException $exception) {
-                                $this->logger->error($exception->getMessage());
-                                $this->logger->error($exception->getTraceAsString());
-                                $file = false;
-                            }
-                            if (is_object($file)) {
-                                $reference = new FileReference();
-                                $reference->setFileUid($file->getUid());
-                                $reference->setDescription($relatedFile->getDescription());
-                                $reference->setTitle($relatedFile->getTitle());
-                                $reference->setPid($pid);
-                                $news->addFalRelatedFile($reference);
+            $newsToMigrateRelated = $this->newsRepository->findAll();
+            if ($newsToMigrateRelated->count() > 0) {
+                foreach ($newsToMigrateRelated as $news) {
+                    $clear = new \TYPO3\CMS\Extbase\Persistence\ObjectStorage();
+                    // Related Files -> FAL Related Files
+                    if ($news->getRelatedFiles()) {
+                        $news->setFalRelatedFiles($clear);
+                        /* @var $relatedFile \GeorgRinger\News\Domain\Model\File */
+                        foreach ($news->getRelatedFiles()->toArray() as $relatedFile) {
+                            $file = false;
+                            if (is_file(PATH_site . 'uploads/tx_news/' . $relatedFile->getFile())) {
+                                try {
+                                    $newfilename = $FU->getUniqueName($relatedFile->getFile(), PATH_site . $folder);
+                                    copy(PATH_site . 'uploads/tx_news/' . $relatedFile->getFile(), $newfilename);
+                                    /* @var $file \TYPO3\CMS\Core\Resource\File */
+                                    $file = $this->resourceFactory->retrieveFileOrFolderObject($newfilename);
+                                } catch (\TYPO3\CMS\Core\Resource\Exception\ResourceDoesNotExistException $exception) {
+                                    $this->logger->error($exception->getMessage());
+                                    $this->logger->error($exception->getTraceAsString());
+                                    $file = false;
+                                }
+                                if (is_object($file)) {
+                                    $reference = new FileReference();
+                                    $reference->setFileUid($file->getUid());
+                                    $reference->setDescription($relatedFile->getDescription());
+                                    $reference->setTitle($relatedFile->getTitle());
+                                    $reference->setPid($pid);
+                                    $news->addFalRelatedFile($reference);
+                                } else {
+                                    $this->logger->error('Unable to migrate relatedFile' . $relatedFile->getFile() . ' of news ' . $news->getUid());
+                                }
                             } else {
-                                $this->logger->error('Unable to migrate relatedFile' . $relatedFile->getFile() . ' of news ' . $news->getUid());
+                                $this->logger->error('File not found for relatedFile' . $relatedFile->getFile() . ' of news ' . $news->getUid());
                             }
-                        } else {
-                            $this->logger->error('File not found for relatedFile' . $relatedFile->getFile() . ' of news ' . $news->getUid());
                         }
                     }
+
+                    $this->newsRepository->update($news);
+                    $this->persistenceManager->persistAll();
+                    $this->logger->info('Migrated relatedFiles of news ' . $news->getUid());
+
                 }
-
-                $this->newsRepository->update($news);
-                $this->persistenceManager->persistAll();
-                $this->logger->info('Migrated relatedFiles of news ' . $news->getUid());
-
             }
         }
     }
@@ -216,7 +218,7 @@ class MediamigrateCommandController extends \TYPO3\CMS\Extbase\Mvc\Controller\Co
                             /* @var $media \GeorgRinger\News\Domain\Model\Media */
                             // Ist es ein Bild?
                             if (strlen($media->getImage()) > 0) {
-                                $this->logger->info('Deleting' . $media->getImage() . 'assigned to ' . $news->getUid());
+                                $this->logger->info('Deleting ' . $media->getImage() . 'assigned to ' . $news->getUid());
                                 unlink(PATH_site . 'uploads/tx_news/' . $media->getImage());
 
                             }
@@ -230,17 +232,17 @@ class MediamigrateCommandController extends \TYPO3\CMS\Extbase\Mvc\Controller\Co
 
             /* @var $newsToMigrate \TYPO3\CMS\Extbase\Persistence\QueryResultInterface */
             $this->newsRepository->setDefaultQuerySettings($querySettings);
-            $newsToDelete = $this->newsRepository->findAll();
+            $newsToDeleteRelated = $this->newsRepository->findAll();
 
-            if ($newsToDelete->count() > 0) {
+            if ($newsToDeleteRelated->count() > 0) {
                 /* @var $news \GeorgRinger\News\Domain\Model\News */
-                foreach ($newsToDelete as $news) {
+                foreach ($newsToDeleteRelated as $news) {
                     if ($news->getRelatedFiles()) {
                         $clear = new \TYPO3\CMS\Extbase\Persistence\ObjectStorage();
                         foreach ($news->getRelatedFiles() as $file) {
                             /* @var $file \GeorgRinger\News\Domain\Model\File */
                             if (strlen($file->getFile()) > 0) {
-                                $this->logger->info('Deleting' . $file->getFile() . 'assigned to ' . $news->getUid());
+                                $this->logger->info('Deleting ' . $file->getFile() . 'assigned to ' . $news->getUid());
                                 unlink(PATH_site . 'uploads/tx_news/' . $file->getFile());
                             }
                         }
