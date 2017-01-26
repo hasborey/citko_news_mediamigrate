@@ -88,7 +88,7 @@ class MediamigrateCommandController extends \TYPO3\CMS\Extbase\Mvc\Controller\Co
 
                     // Media -> FAL Media
                     /* @var $news \GeorgRinger\News\Domain\Model\News */
-                    if ($news->getMedia()) {
+                    if ($news->getMedia() && $news->getMedia()->count() > 0) {
                         $news->setFalMedia($clear);
                         foreach ($news->getMedia()->toArray() as $media) {
                             /* @var $media \GeorgRinger\News\Domain\Model\Media */
@@ -149,7 +149,7 @@ class MediamigrateCommandController extends \TYPO3\CMS\Extbase\Mvc\Controller\Co
                 foreach ($newsToMigrateRelated as $news) {
                     $clear = new \TYPO3\CMS\Extbase\Persistence\ObjectStorage();
                     // Related Files -> FAL Related Files
-                    if ($news->getRelatedFiles()) {
+                    if ($news->getRelatedFiles() && $news->getRelatedFiles()->count() > 0) {
                         $news->setFalRelatedFiles($clear);
                         /* @var $relatedFile \GeorgRinger\News\Domain\Model\File */
                         foreach ($news->getRelatedFiles()->toArray() as $relatedFile) {
